@@ -5,12 +5,27 @@ packer_cache/
 crash.log
 
 # https://www.packer.io/guides/hcl/variables
-# Exclude all .pkrvars.hcl files, which are likely to contain sensitive data, 
-# such as password, private keys, and other secrets. These should not be part of 
-# version control as they are data points which are potentially sensitive and 
+# Exclude all .pkrvars.hcl files, which are likely to contain sensitive data,
+# such as password, private keys, and other secrets. These should not be part of
+# version control as they are data points which are potentially sensitive and
 # subject to change depending on the environment.
 #
 *.pkrvars.hcl
 
 # For built boxes
 *.box
+
+# Packer output directories
+output-*/
+
+# Packer plugin directory
+.packer.d/
+
+# ISO files
+*.iso
+
+# QCOW2 disk images
+*.qcow2
+
+# Extracted VirtIO drivers (from virtio-win.iso)
+drivers/

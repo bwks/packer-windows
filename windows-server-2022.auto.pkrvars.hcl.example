@@ -1,0 +1,16 @@
+# Copy this file to windows-server-2022.auto.pkrvars.hcl and update the values.
+# .pkrvars.hcl files are git-ignored to protect sensitive values.
+
+iso_url      = "./server2022.iso"
+iso_checksum = "sha256:YOUR_ISO_CHECKSUM_HERE"
+
+winrm_username = "Administrator"
+winrm_password = "packer"
+
+vm_cpus  = 4
+vm_memory = 8192
+disk_size = "61440M"
+
+headless         = true
+output_directory = "output-win2022"
+vm_name          = "win2022-cloudbase"
