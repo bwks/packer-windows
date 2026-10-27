@@ -36,13 +36,18 @@ sudo dnf install qemu-kvm qemu-img xorriso
 
 ### Extract VirtIO drivers
 
-The VirtIO drivers must be extracted from the ISO into the `drivers/` directory. Only the viostor (disk) and NetKVM (network) drivers for 2k22/amd64 are needed:
+The VirtIO drivers and guest tools installer must be extracted from the ISO into the `drivers/` directory. The viostor (disk) driver for 2k22/amd64 is used during Windows setup; the guest tools installer goes on the build CD and installs every VirtIO driver and the QEMU guest agent into the image:
 
 ```bash
 xorriso -osirrox on -indev virtio-win.iso \
   -extract /viostor/2k22/amd64 drivers/viostor \
-  -extract /NetKVM/2k22/amd64 drivers/NetKVM
+  -extract /virtio-win-guest-tools.exe drivers/virtio-win-guest-tools.exe
+chmod -R u+w drivers
 ```
+
+`xorriso` keeps the ISO's read-only permissions, which stop Packer from building its CD, hence the `chmod`.
+
+The image is built and runs on a VirtIO disk, so the build fails if the VirtIO storage driver is not installed. The build uses an e1000 network card, because the guest tools installer reinstalls the VirtIO network driver and would drop Packer's WinRM connection; the image uses the VirtIO network driver on a Sherpa node.
 
 ## Usage
 
@@ -137,6 +142,11 @@ The image ships with cloudbase-init configured for:
 
 Config files are in `config/` and get placed in `C:\Program Files\Cloudbase Solutions\Cloudbase-Init\conf\`.
 
+The service runs as LocalSystem (`RUN_SERVICE_AS_LOCAL_SYSTEM=1`), and the build fails if it does
+not. Run as its own `cloudbase-init` user, the service can reset that user's password on first
+boot and then crash before it is given the new one; after the reboot it cannot log on, so no
+users are created and no user data is applied.
+
 ## Project Structure
 
 ```
@@ -147,7 +157,7 @@ Config files are in `config/` and get placed in `C:\Program Files\Cloudbase Solu
 │   └── autounattend.xml                   # Unattended Windows install
 ├── drivers/                               # Extracted from virtio-win.iso (git-ignored)
 │   ├── viostor/                           # VirtIO block driver
-│   └── NetKVM/                            # VirtIO network driver
+│   └── virtio-win-guest-tools.exe         # VirtIO drivers and guest agent installer
 ├── scripts/
 │   ├── enable-winrm.ps1                   # WinRM for Packer communicator
 │   ├── install-virtio.ps1                 # VirtIO guest tools

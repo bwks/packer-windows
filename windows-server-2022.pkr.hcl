@@ -21,7 +21,12 @@ source "qemu" "win2022" {
 
   accelerator    = "kvm"
   machine_type   = "pc"
-  disk_interface = "ide"
+  # A VirtIO disk, as on a Sherpa node, so the VirtIO storage driver is installed as a boot
+  # driver; Windows does not boot from a VirtIO disk otherwise. The network card stays e1000:
+  # installing the VirtIO guest tools reinstalls the VirtIO network driver, which would drop
+  # Packer's WinRM connection mid-step and hang the build. The guest tools leave the VirtIO
+  # network driver in the image, and Windows uses it on a Sherpa node's VirtIO network card.
+  disk_interface = "virtio"
   net_device     = "e1000"
   format         = "qcow2"
 
@@ -34,9 +39,12 @@ source "qemu" "win2022" {
     "answer_files/Autounattend.xml",
   ]
 
-  # Secondary CD-ROM with scripts
+  # Secondary CD-ROM with scripts, the VirtIO storage driver for Windows setup, and the
+  # VirtIO guest tools installer
   cd_files = [
     "scripts/enable-winrm.ps1",
+    "drivers/viostor",
+    "drivers/virtio-win-guest-tools.exe",
   ]
   cd_label = "cidata"
 

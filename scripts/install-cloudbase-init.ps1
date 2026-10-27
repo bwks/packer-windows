@@ -13,9 +13,20 @@ $installArgs = @(
     "/qn",
     "/l*v", "C:\Windows\Temp\cloudbase-init-install.log",
     "USERNAME=Admin",
-    "LOGGINGSERIALPORTNAME=COM1"
+    "LOGGINGSERIALPORTNAME=COM1",
+    # Run as LocalSystem, not a "cloudbase-init" user. As that user, the first run resets
+    # the user's password, then can fail to load its profile so early in boot ("The device
+    # is not ready") before the service is given the new password; after the reboot the
+    # service cannot log on, and the user data is never applied.
+    "RUN_SERVICE_AS_LOCAL_SYSTEM=1"
 )
 Start-Process -FilePath "msiexec.exe" -ArgumentList $installArgs -Wait -NoNewWindow
+
+$serviceAccount = (Get-CimInstance Win32_Service -Filter "Name='cloudbase-init'").StartName
+if ($serviceAccount -ne "LocalSystem") {
+    Write-Error "cloudbase-init runs as '$serviceAccount', expected LocalSystem"
+    exit 1
+}
 
 # Stop the service - it should not run until after sysprep
 Stop-Service -Name cloudbase-init -Force -ErrorAction SilentlyContinue
